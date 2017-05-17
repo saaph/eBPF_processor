@@ -86,7 +86,7 @@ class EBPFProc(processor_t):
             0x6f:('lsh', self._ana_2regs, CF_USE1|CF_USE2),
             0x77:('rsh', self._ana_reg_imm, CF_USE1|CF_USE2),
             0x7f:('rsh', self._ana_2regs, CF_USE1|CF_USE2),
-            0x87:('neg', self._ana_1reg, CF_USE1|CF_USE2), # FIXME
+            0x87:('neg', self._ana_1reg, CF_USE1|CF_USE2),
             0x77:('mod', self._ana_reg_imm, CF_USE1|CF_USE2),
             0x7f:('mod', self._ana_2regs, CF_USE1|CF_USE2),
             0xa7:('xor', self._ana_reg_imm, CF_USE1|CF_USE2),
@@ -104,10 +104,10 @@ class EBPFProc(processor_t):
             0x28:('ldah', self._ana_phrase_imm, CF_USE1|CF_USE2),
             0x30:('ldab', self._ana_phrase_imm, CF_USE1|CF_USE2),
             0x38:('ldadw', self._ana_phrase_imm, CF_USE1|CF_USE2),
-            0x40:('ldinw', self._ana_phrase_imm, CF_USE1|CF_USE2),
-            0x48:('ldinh', self._ana_phrase_imm, CF_USE1|CF_USE2),
-            0x50:('ldinb', self._ana_phrase_imm, CF_USE1|CF_USE2),
-            0x58:('ldindw', self._ana_phrase_imm, CF_USE1|CF_USE2),
+            0x40:('ldinw', self._ana_reg_regdisp, CF_USE1|CF_USE2),
+            0x48:('ldinh', self._ana_reg_regdisp, CF_USE1|CF_USE2),
+            0x50:('ldinb', self._ana_reg_regdisp, CF_USE1|CF_USE2),
+            0x58:('ldindw', self._ana_reg_regdisp, CF_USE1|CF_USE2),
             0x61:('ldxw', self._ana_reg_regdisp, CF_USE1|CF_USE2),
             0x69:('ldxh', self._ana_reg_regdisp, CF_USE1|CF_USE2),
             0x71:('ldxb', self._ana_reg_regdisp, CF_USE1|CF_USE2),
@@ -142,8 +142,6 @@ class EBPFProc(processor_t):
 
             0x95:('ret', self._ana_nop, CF_STOP)
         }
-
-
         
         Instructions = [{'name':x[0], 'feature':x[2]} for x in self.OPCODES.values()]
         self.inames = {v[0]:k for k,v in self.OPCODES.items()}
@@ -248,7 +246,6 @@ class EBPFProc(processor_t):
         self.cmd[2].type = o_near
         self.cmd[2].addr = 8 * self.off + self.cmd.ea + 8
         self.cmd[2].dtyp = dt_dword
-
 
     def _ana_cond_jmp_reg_reg(self):
         self.cmd[0].type = o_reg
@@ -357,7 +354,8 @@ class EBPFProc(processor_t):
         elif op.type == o_displ:
             out_symbol('[')
             out_register(self.regNames[op.phrase])
-            OutValue(op, OOFS_NEEDSIGN|OOFW_IMM)
+            if op.value:
+                OutValue(op, OOFS_NEEDSIGN|OOFW_IMM)
             out_symbol(']')
         else:
             return False
